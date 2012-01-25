@@ -42,15 +42,15 @@ class RealexRequest(object):
         realex's url.
 
         rx = RealexRequest("EUR", "20")
-        form = rx.as_form()
-        fields = rx.as_fields()
+        form = rx.to_form()
+        fields = rx.to_fields()
 
         return render_to_response("template.html", {"form": form, "fields": fields, "rx":rx})
 
         in template:
 
-            {{ rx.as_form|safe }}
-            {{ rx.as_fields|safe }}
+            {{ rx.to_form|safe }}
+            {{ rx.to_fields|safe }}
             {{ fields|safe }}
             {{ form|safe }}
     """
@@ -80,7 +80,7 @@ class RealexRequest(object):
                 self.__dict__[k] = v
         
 
-    def as_form(self, form_attr = {}, fields={}):
+    def to_form(self, form_attr = {}, fields={}):
         """ outputs data as a string for render as a form.
             you can add classes or other attributes to fields and form
             by passing values in this fashon:
@@ -94,11 +94,11 @@ class RealexRequest(object):
         form_attr.update(form_init)
         form_str = "<form %s >\n"%(" ".join(["%s='%s'"%(k,v) for k, v in form_attr.items()]))
         form_str = "%s %s \n<input type='submit' value='Proceed to secure server'/></form>"%(\
-            form_str, self.as_fields(fields))
+            form_str, self.to_fields(fields))
         return form_str
         
         
-    def as_fields(self, fields={}):
+    def to_fields(self, fields={}):
         """ outputs data as a set of hidden fields for display in a form 
             prepared by user
 
