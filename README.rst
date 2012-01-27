@@ -85,3 +85,10 @@ additional values, you can (in your view):
     >>>    <input  type='hidden' name='AUTO_SETTLE_FLAG' value='1' />\n 
     >>>    \n<input type='submit' value='Proceed to secure server'/></form>"""
     
+
+as for response url just do:
+
+::
+
+    rs = realex.RealexResponse(request.POST)
+    result = rs.result

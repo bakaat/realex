@@ -153,13 +153,14 @@ class RealexResponse(object):
             if item not in post_data.keys():
                 raise PostDictKeyError(item)
 
-        required_in_post.pop("MD5HASH")
+        required_in_post.remove("MD5HASH")
 
         md5hash = hashlib.md5(".".join([post_data[x] for x in required_in_post]))
         md5hash = hashlib.md5("%s.%s"%(md5hash.hexdigest(), settings.REALEX_SECRET))
 
-        if md5hash != post_data["MD5HASH"]:
+        if md5hash.hexdigest() != post_data["MD5HASH"]:
             raise MD5CheckError()
 
+        post_data = dict((k.lower(), v) for k, v in post_data.items())
         post_data.update(self.__dict__)
         self.__dict__ = post_data
