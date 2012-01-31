@@ -10,7 +10,30 @@ VHI Healthcare, Party Poker, Daft.ie, Aer Lingus, AA Insurance amongst many othe
 As one of clients is using realex there was a need to develop simple python library that
 can be used with django.
 
-as this lib is not tested, send errors and problems to: support@lukaszbaczynski.com
+Due to some mess around django's csrf_exempt I advice to use Chase Seibert's solution
+to shortcircuit csrf middlewares for your response view.
+
+Find source code and all other stuff in this post:
+
+http://bitkickers.blogspot.com/2011/08/django-exclude-some-views-from.html
+
+in settings:
+
+::
+
+    MIDDLEWARE_CLASSES = (
+        # all your middlewares as normally (skipping csrf)
+        'django.middleware.gzip.GZipMiddleware',
+        .....
+        'django.middleware.cache.FetchFromCacheMiddleware',
+        # and shortcircut before csrfs
+        'middleware.shortcircuit.ShortCircuitMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.middleware.csrf.CsrfResponseMiddleware',
+    )
+
+
+send errors and problems to: support@lukaszbaczynski.com
 
 
 settings.py:

@@ -23,8 +23,11 @@ from django.conf import settings
 
 class MD5CheckError(Exception):    
     """ Rised on MD5hashes mismatch """
+    def __init__(self, value=None):
+        self.value = value
+
     def __str__(self):
-        return "Response MD5 hash dismatch"
+        return "Response MD5 hash dismatch %s"%value
 
 
 class PostDictKeyError(Exception):
@@ -146,8 +149,8 @@ class RealexResponse(object):
 
 
     def process_post_keys(self, post_data):
-        required_in_post = ["TIMESTAMP", "RESULT", "ORDER_ID", "MESSAGE", 
-                            "AUTHCODE", "PASREF", "MD5HASH"]
+        required_in_post = ["TIMESTAMP", "MERCHANT_ID", "ORDER_ID", "RESULT", 
+                    "MESSAGE", "PASREF", "AUTHCODE", "MD5HASH"]
 
         for item in required_in_post:
             if item not in post_data.keys():
@@ -159,8 +162,9 @@ class RealexResponse(object):
         md5hash = hashlib.md5("%s.%s"%(md5hash.hexdigest(), settings.REALEX_SECRET))
 
         if md5hash.hexdigest() != post_data["MD5HASH"]:
-            raise MD5CheckError()
+            raise MD5CheckError("%s != %s"%(md5hash.hexdigest(), post_data["MD5HASH"]))
 
         post_data = dict((k.lower(), v) for k, v in post_data.items())
         post_data.update(self.__dict__)
         self.__dict__ = post_data
+        
