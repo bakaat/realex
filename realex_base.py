@@ -4,10 +4,10 @@
     Python library for handling realex payments by Lukasz Baczynski.
     Setup to work for django. you need to set 2 variables in your
     settings.py module:
-        REALEX_MERCHANTID = "your_merchant_id_here"
-        REALEX_SECRET = "your_secret_here"
-        REALEX_URL = "https://epage.payandshop.com/epage.cgi"
-
+        REALEX_MERCHANTID = "your_mearchant_id"
+        REALEX_ACCOUNT = 'your_realex_account'
+        REALEX_SECRET = "your_realex_secret"
+        REALEX_POST_URL = "https://hpp.realexpayments.com/pay"
 """
 
 #python
@@ -21,13 +21,13 @@ from django.conf import settings
 #local
 
 
-class MD5CheckError(Exception):    
-    """ Rised on MD5hashes mismatch """
+class SHA1CheckError(Exception):    
+    """ Rised on SHA1hashes mismatch """
     def __init__(self, value=None):
         self.value = value
 
-    def __str__(self):
-        return "Response MD5 hash dismatch %s"%value
+    def __str__(self, value=None):
+        return "Response SHA1 hash dismatch %s" % value
 
 
 class PostDictKeyError(Exception):
@@ -65,16 +65,21 @@ class RealexRequest(object):
             in realex response
         """
         self.merchant_id = settings.REALEX_MERCHANTID
+        self.account = settings.REALEX_ACCOUNT
+        if settings.REALEX_RESPONSE_URL:
+            self.merchant_response_url = settings.REALEX_RESPONSE_URL
 
         #setting values required by Realex
         self.currency = currency
-        self.amount = amount
+        # needs to add two zeros for most currencies (EURO, GBP)
+        # please check Realex documentation to verify!
+        self.amount = '%i' % (int(amount) * 100)
         self.timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         uid = uuid.uuid4().hex[-4:]
         self.order_id = "%s-%s"%(self.timestamp, uid)
-        self.md5hash = hashlib.md5("%s.%s.%s.%s.%s"%(self.timestamp, self.merchant_id, \
+        self.sha1hash = hashlib.sha1("%s.%s.%s.%s.%s"%(self.timestamp, self.merchant_id, \
             self.order_id, self.amount, self.currency))
-        self.md5hash = hashlib.md5("%s.%s"%(self.md5hash.hexdigest(), settings.REALEX_SECRET)).hexdigest()
+        self.sha1hash = hashlib.sha1("%s.%s"%(self.sha1hash.hexdigest(), settings.REALEX_SECRET)).hexdigest()
         self.auto_settle_flag = 1
         
         #setting additional values that will be returned to you
@@ -93,7 +98,7 @@ class RealexRequest(object):
                     "currency": {"class": "currency_sign", "style": "color:red;"}
                 }
         """
-        form_init = {"action": settings.REALEX_URL, "method": "POST"}
+        form_init = {"action": settings.REALEX_POST_URL, "method": "POST"}
         form_attr.update(form_init)
         form_str = "<form %s >\n"%(" ".join(["%s='%s'"%(k,v) for k, v in form_attr.items()]))
         form_str = "%s %s \n<input type='submit' value='Proceed to secure server'/></form>"%(\
@@ -135,8 +140,8 @@ class RealexResponse(object):
             rs = RealexResponse(post_data)
         except PostDictKeyError:
             #Handle response that keys are missing
-        except MD5CheckError:
-            #Handle response when md5 check did't succed
+        except SHA1CheckError:
+            #Handle response when sha1 check did't succed
 
         order_id = rs.order_id
         my_custom_value = rs.__dict__.get("my_custom_value", None)
@@ -150,19 +155,19 @@ class RealexResponse(object):
 
     def process_post_keys(self, post_data):
         required_in_post = ["TIMESTAMP", "MERCHANT_ID", "ORDER_ID", "RESULT", 
-                    "MESSAGE", "PASREF", "AUTHCODE", "MD5HASH"]
+                    "MESSAGE", "PASREF", "AUTHCODE", "SHA1HASH"]
 
         for item in required_in_post:
             if item not in post_data.keys():
                 raise PostDictKeyError(item)
 
-        required_in_post.remove("MD5HASH")
+        required_in_post.remove("SHA1HASH")
 
-        md5hash = hashlib.md5(".".join([post_data[x] for x in required_in_post]))
-        md5hash = hashlib.md5("%s.%s"%(md5hash.hexdigest(), settings.REALEX_SECRET))
+        sha1hash = hashlib.sha1(".".join([post_data[x] for x in required_in_post]))
+        sha1hash = hashlib.sha1("%s.%s"%(sha1hash.hexdigest(), settings.REALEX_SECRET))
 
-        if md5hash.hexdigest() != post_data["MD5HASH"]:
-            raise MD5CheckError("%s != %s"%(md5hash.hexdigest(), post_data["MD5HASH"]))
+        if sha1hash.hexdigest() != post_data["SHA1HASH"]:
+            raise SHA1CheckError("%s != %s"%(sha1hash.hexdigest(), post_data["SHA1HASH"]))
 
         post_data = dict((k.lower(), v) for k, v in post_data.items())
         post_data.update(self.__dict__)
