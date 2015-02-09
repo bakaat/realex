@@ -1,1 +1,1 @@
-from realex_base import *
+from base import RealexFormBase
