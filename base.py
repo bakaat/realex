@@ -25,11 +25,13 @@ class PostDictKeyError(Exception):
 
 class RealexFormBase(object):
     """Should be overwritten with values required by realex api."""
-    merchant_id = ""
-    account = ""
-    secret = ""
-    endpoint_url = "https://hpp.sandbox.realexpayments.com/pay"
-    response_url = None
+
+    class Meta:
+        merchant_id = ""
+        account = ""
+        secret = ""
+        endpoint_url = "https://hpp.sandbox.realexpayments.com/pay"
+        response_url = None
 
     def __init__(self, currency=None, amount=None, data=None, form_attr=None,
                  fields_attr=None, order_id=None, **kw):
@@ -65,7 +67,8 @@ class RealexFormBase(object):
         :param kw: Any other values that should be sent with the request to
                    Realex
         """
-        assert all([self.merchant_id, self.account, self.secret])
+        assert all([self.Meta.merchant_id, self.Meta.account,
+                    self.Meta.secret])
         if data:
             self.data = data
             return
@@ -84,13 +87,13 @@ class RealexFormBase(object):
             "%s-%s" % (self.fields['timestamp'], uid)
         # hash fields
         self.sha1hash = hashlib.sha1(".".join([self.fields['timestamp'],
-                                               self.merchant_id,
+                                               self.Meta.merchant_id,
                                                self.fields['order_id'],
                                                self.fields['timestamp'],
                                                self.fields['currency']]))
         # sign fields hash with secret and create new hash
         self.fields['sha1hash'] = hashlib.sha1(".".join([
-            self.sha1hash.hexdigest(), self.secret])).hexdigest()
+            self.sha1hash.hexdigest(), self.Meta.secret])).hexdigest()
         self.fields['auto_settle_flag'] = 1
 
         # setting additional values that will be returned to you
@@ -101,7 +104,7 @@ class RealexFormBase(object):
     def as_form(self):
         """Renders the form along with all of it's values."""
         form_attr = self.form_attr or dict()
-        form_init = {"action": self.endpoint_url, "method": "POST"}
+        form_init = {"action": self.Meta.endpoint_url, "method": "POST"}
         form_attr.update(form_init)
         form_str = "<form %s >\n" % (" ".join(["%s='%s'" % (k, v)
                                                for k, v in form_attr.items()]))
@@ -115,11 +118,11 @@ class RealexFormBase(object):
         fields_str = ""
         fields = self.fields_attr or dict()
         all_fields = {
-            'merchant_id': self.merchant_id,
-            'account': self.account
+            'merchant_id': self.Meta.merchant_id,
+            'account': self.Meta.account
         }
-        if self.response_url:
-            all_fields['response_url'] = self.response_url
+        if self.Meta.response_url:
+            all_fields['response_url'] = self.Meta.response_url
         all_fields.update(self.fields)
         for k, v in all_fields.items():
             field_init = {"name": k.upper(), "value": v, "type": "hidden"}
@@ -153,7 +156,7 @@ class RealexFormBase(object):
         sha1hash = hashlib.sha1(".".join([self.data[x]
                                           for x in required_in_post]))
         sha1hash = hashlib.sha1("%s.%s" % (sha1hash.hexdigest(),
-                                           self.secret))
+                                           self.Meta.secret))
 
         if sha1hash.hexdigest() != self.data["SHA1HASH"]:
             raise SHA1CheckError("%s != %s" % (sha1hash.hexdigest(),

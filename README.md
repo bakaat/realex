@@ -1,5 +1,6 @@
 # Realex lib for python #
 
+## About Realex ##
 Realex Payments is a leading European online payment gateway,
 headquartered in Dublin with offices in London and Paris.
 Established 10 years in May 2010, we provide a complete online payment
@@ -7,17 +8,17 @@ solution to over 5,000 clients including Virgin Atlantic,
 VHI Healthcare, Party Poker, Daft.ie, Aer Lingus,
 AA Insurance amongst many others.
 
-# What and why #
+## What and why ##
 
-This lib provides a form class handling request to and response from
-Realex hpp payment. You should inherit from RealexFormBase with your auth
-creds.
+This lib provides a base form class that can handle "request to" and
+"response from" Realex hpp payment. You should inherit from RealexFormBase 
+and set your auth creds in it's Meta class 
 
 If you've used django, you may find some parts being similar to how django
-handles Forms. This said the lib is supposed to be web framework agnostic so
-that you can use it with any python framework.
+handles Forms. This said the lib doesn't use django classes as it's supposed to
+be web framework agnostic.
 
-# Required settings #
+## Required settings ##
 
     REALEX_MERCHANTID = "your_merchant_id_here"
     REALEX_ACCOUNT = "your_realex_account"
@@ -37,10 +38,12 @@ sample usage (with django):
     
     # override the base class with credentials 
     class RealexForm(RealexFormBase):
-        merchant_id = settings.REALEX_MERCHANTID
-        account = settings.REALEX_ACCOUNT
-        secret = settings.REALEX_SECRET
-        endpoint_url = settings.REALEX_POST_URL
+    
+        class Meta:
+            merchant_id = settings.REALEX_MERCHANTID
+            account = settings.REALEX_ACCOUNT
+            secret = settings.REALEX_SECRET
+            endpoint_url = settings.REALEX_POST_URL
 
     # views.py
     from .forms import RealexForm
@@ -123,5 +126,3 @@ Handling response :
 
     # rx.cleaned_data is only available after successful validation
     result = rx.cleaned_data
-
-Docs 

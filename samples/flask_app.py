@@ -14,11 +14,13 @@ SECRET = "zbcd4321"
 
 
 class RealexForm(RealexFormBase):
-    merchant_id = MERCHANT_ID
-    account = ACCOUNT
-    secret = SECRET
-    endpoint_url = "https://hpp.sandbox.realexpayments.com/pay"
-    response_url = "http://localhost/handle"
+
+    class Meta:
+        merchant_id = MERCHANT_ID
+        account = ACCOUNT
+        secret = SECRET
+        endpoint_url = "https://hpp.sandbox.realexpayments.com/pay"
+        response_url = "http://localhost/handle"
 
 
 @app.route("/", methods=['GET'])
